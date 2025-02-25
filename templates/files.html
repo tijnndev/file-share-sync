@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h2>Your Files</h2>
+    </div>
+    <div class="col-auto">
+        <form id="upload-form" action="{{ url_for('upload_file') }}" method="post" enctype="multipart/form-data">
+            <div class="input-group">
+                <input type="file" class="form-control" id="file-input" name="file" hidden>
+                <label class="btn btn-primary" for="file-input">
+                    <i class="fas fa-upload"></i> Upload File
+                </label>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="row" id="file-list">
+    {% if files %}
+    <div class="col-12">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Filename</th>
+                        <th>Uploaded</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for file in files %}
+                    <tr>
+                        <td>{{ file.filename }}</td>
+                        <td>{{ file.uploaded_at.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                        <td>
+                            <a href="{{ url_for('download_file', filename=file.filename) }}" 
+                               class="btn btn-sm btn-success download-btn">
+                                Download
+                            </a>
+                            <a href="{{ url_for('delete_file', file_id=file.id) }}" 
+                               class="btn btn-sm btn-danger delete-btn">
+                                Delete
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% else %}
+    <div class="col-12">
+        <div class="alert alert-info">
+            No files uploaded yet. Click the upload button to add files.
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
