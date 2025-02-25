@@ -7,14 +7,11 @@ from werkzeug.utils import secure_filename
 import logging
 from sqlalchemy.orm import DeclarativeBase
 
-# Configure logging
 logging.basicConfig(level=logging.DEBUG)
 
-# Initialize Flask app
 app = Flask(__name__)
 app.secret_key = os.environ.get("SESSION_SECRET", "dev-secret-key")
 
-# Database configuration
 class Base(DeclarativeBase):
     pass
 
@@ -23,20 +20,16 @@ app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///app.db"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 db.init_app(app)
 
-# File upload configuration
 UPLOAD_FOLDER = 'uploads'
 ALLOWED_EXTENSIONS = {'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif', 'doc', 'docx', 'apk'}
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
-# Ensure upload directory exists
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
-# Login manager configuration
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
 
-# Import models after db initialization
 from models import User, File
 
 @login_manager.user_loader
