@@ -7,12 +7,10 @@
     </div>
     <div class="col-auto">
         <form id="upload-form" action="{{ url_for('upload_file') }}" method="post" enctype="multipart/form-data">
-            <div class="input-group">
-                <input type="file" class="form-control" id="file-input" name="file" hidden>
-                <label class="btn btn-primary" for="file-input">
-                    <i class="fas fa-upload"></i> Upload File
-                </label>
-            </div>
+            <input type="file" id="file-input" name="file" multiple hidden>
+            <label class="btn btn-primary" for="file-input">
+                <i class="fas fa-upload"></i> Upload File
+            </label>
         </form>
     </div>
 </div>
@@ -53,9 +51,69 @@
     {% else %}
     <div class="col-12">
         <div class="alert alert-info">
-            No files uploaded yet. Click the upload button to add files.
+            No files uploaded yet. Click the upload button or drag files onto the page.
         </div>
     </div>
     {% endif %}
 </div>
+
+<div id="drop-zone" class="drop-zone">
+    <div class="drop-message">Drop files here to upload</div>
+</div>
+
+<style>
+    .drop-zone {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.7);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        font-weight: bold;
+        text-align: center;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.3s ease-in-out;
+    }
+
+    .drop-zone.active {
+        opacity: 1;
+        pointer-events: all;
+    }
+</style>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const dropZone = document.getElementById("drop-zone");
+        const fileInput = document.getElementById("file-input");
+        const uploadForm = document.getElementById("upload-form");
+
+        document.addEventListener("dragover", function (event) {
+            event.preventDefault();
+            dropZone.classList.add("active");
+        });
+
+        document.addEventListener("dragleave", function (event) {
+            if (event.relatedTarget === null) {
+                dropZone.classList.remove("active");
+            }
+        });
+
+        document.addEventListener("drop", function (event) {
+            event.preventDefault();
+            dropZone.classList.remove("active");
+
+            if (event.dataTransfer.files.length > 0) {
+                fileInput.files = event.dataTransfer.files;
+                uploadForm.submit();
+            }
+        });
+    });
+</script>
+
 {% endblock %}

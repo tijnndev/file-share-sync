@@ -1,3 +1,4 @@
+from datetime import datetime
 import os
 from flask import Flask, render_template, request, redirect, url_for, flash, send_from_directory
 from flask_sqlalchemy import SQLAlchemy
@@ -21,7 +22,7 @@ app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 db.init_app(app)
 
 UPLOAD_FOLDER = 'uploads'
-ALLOWED_EXTENSIONS = {'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif', 'doc', 'docx', 'apk'}
+ALLOWED_EXTENSIONS = {'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif', 'doc', 'docx', 'apk', 'exe', 'json'}
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
@@ -102,18 +103,35 @@ def upload_file():
     if file and allowed_file(file.filename):
         filename = secure_filename(file.filename)
         file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-        file.save(file_path)
-        
-        new_file = File(
-            filename=filename,
-            user_id=current_user.id
-        )
-        db.session.add(new_file)
-        db.session.commit()
-        
+
+        existing_file = File.query.filter_by(filename=filename, user_id=current_user.id).first()
+
+        if existing_file:
+            existing_file_path = os.path.join(app.config['UPLOAD_FOLDER'], existing_file.filename)
+            if os.path.exists(existing_file_path):
+                os.remove(existing_file_path)
+
+            file.save(file_path)
+            existing_file.uploaded_at = datetime.now()
+            db.session.commit()
+            flash('File successfully replaced')
+
+        else:
+            file.save(file_path)
+            new_file = File(
+                filename=filename,
+                user_id=current_user.id,
+                uploaded_at=datetime.now()
+            )
+            db.session.add(new_file)
+            db.session.commit()
+            flash('File successfully uploaded')
+
         return redirect(url_for('index'))
+
     flash('File type not allowed')
     return redirect(url_for('index'))
+
 
 @app.route('/download/<filename>')
 @login_required
@@ -133,9 +151,9 @@ def delete_file(file_id):
         return redirect(url_for('index'))
         
     try:
-        os.remove(os.path.join(app.config['UPLOAD_FOLDER'], file.filename))
         db.session.delete(file)
         db.session.commit()
+        os.remove(os.path.join(app.config['UPLOAD_FOLDER'], file.filename))
     except Exception as e:
         flash(f'Error deleting file: {str(e)}')
     return redirect(url_for('index'))
